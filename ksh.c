@@ -6,17 +6,20 @@
 #include <string.h>
 
 int ksh_cd(char **args);
+int ksh_ls(char **args);
 int ksh_help(char **args);
 int ksh_exit(char **args);
 
 char *builtin_str[] = {
   "cd",
+  "ls",
   "help",
   "exit"
 };
 
 int (*builtin_func[]) (char **) = {
   &ksh_cd,
+  &ksh_ls,
   &ksh_help,
   &ksh_exit
 };
@@ -28,12 +31,25 @@ int ksh_num_bultins() {
 
 // ========== COMMANDS ==========
 
+int ksh_ls(char **args) {
+  char cwd[256];
+
+  if (getcwd(cwd, sizeof(cwd)) != 0) {
+    printf("> %s\n", cwd);
+  } else {
+    perror("ksh");
+  }
+}
+
 int ksh_cd(char **args) {
   if (args[1] == NULL) {
     fprintf(stderr, "ksh: expected argument to \"cd\"\n");
   } else {
-    if (chdir(args[1]) !=0) {
+    int resp = chdir(args[1]);
+    if (resp!=0) {
       perror("ksh");
+    } else {
+      ksh_ls(args);
     }
   }
   return 1;
