@@ -1,17 +1,20 @@
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 int ksh_cd(char **args);
+int ksh_pwd(char **args);
 int ksh_ls(char **args);
 int ksh_help(char **args);
 int ksh_exit(char **args);
 
 char *builtin_str[] = {
   "cd",
+  "pwd",
   "ls",
   "help",
   "exit"
@@ -19,6 +22,7 @@ char *builtin_str[] = {
 
 int (*builtin_func[]) (char **) = {
   &ksh_cd,
+  &ksh_pwd,
   &ksh_ls,
   &ksh_help,
   &ksh_exit
@@ -31,7 +35,7 @@ int ksh_num_bultins() {
 
 // ========== COMMANDS ==========
 
-int ksh_ls(char **args) {
+int ksh_pwd(char **args) {
   char cwd[256];
 
   if (getcwd(cwd, sizeof(cwd)) != 0) {
@@ -39,6 +43,29 @@ int ksh_ls(char **args) {
   } else {
     perror("ksh");
   }
+}
+
+int ksh_ls(char **args) {
+  DIR *dir = NULL;
+  struct dirent *entry = NULL;
+
+  if(args[1] == NULL) {
+    args[1] = ".";
+  }
+
+  if((dir = opendir(args[1])) == NULL) {
+    printf("\nCannot open directory [%s]\n", args[1]);
+    perror("ksh");
+  } else if((entry = readdir(dir)) != NULL) {
+    printf("Contents of [%s]\n", args[1]);
+    while((entry = readdir(dir)) != NULL) {
+      printf(" [%s] ", entry->d_name);
+    }
+    printf("\n");
+  
+  closedir(dir);
+  }
+  return 1;
 }
 
 int ksh_cd(char **args) {
@@ -49,7 +76,7 @@ int ksh_cd(char **args) {
     if (resp!=0) {
       perror("ksh");
     } else {
-      ksh_ls(args);
+      ksh_pwd(args);
     }
   }
   return 1;
